@@ -6,37 +6,32 @@ using UnityEngine.SceneManagement;
 public class RopeSwingScript : MonoBehaviour
 {
     [Header("GameObject")]
+    [SerializeField] GameObject UIManager;
     public GameObject ball;
 
-
-
-
-    [SerializeField] float initialSwingingSpeed = 10f;
-    [SerializeField] float initialSwingingDistance = 16f;
-    private float ballSpeed;
+    [Header("Other")]
+    private SpringJoint rope;
+    public LineRenderer lineRenderer;
     Rigidbody rigidBodyOfBall;
     Vector3 origin;
 
-    [Header("Rope")]
-    private SpringJoint rope;
-    private bool firstRopeConnected = false;
+    [Header("float")]
+    [SerializeField] float initialSwingingSpeed = 10f;
+    [SerializeField] float initialSwingingDistance = 16f;
+    private float ballSpeed;
 
-    [Header("Game")]
-    [SerializeField] private bool gameStarted = false;
-    public bool gameOver = false;
-    public LineRenderer lineRenderer;
-    int layerMask = 1 << 8;//wall layer
+    [Header("bool")]
+    public bool gameStarted = false;
+    public bool firstRopeConnected = false;
 
-    // Start is called before the first frame update
     void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
         rigidBodyOfBall = ball.GetComponent<Rigidbody>();
-        ballSpeed = /*ball.GetComponent<Ball>().ballSpeed;*/125f;
+        ballSpeed = 125f;
         origin = ball.transform.position;
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (gameStarted)
@@ -46,7 +41,6 @@ public class RopeSwingScript : MonoBehaviour
 
                 RaycastHit aim;
                 Physics.Raycast(origin, transform.forward + transform.up, out aim, Mathf.Infinity);
-                print(aim.collider.gameObject.name);
                 if (aim.transform != null && aim.collider.gameObject.CompareTag("obstacle"))
                 {
                     Sling(aim);
@@ -84,7 +78,7 @@ public class RopeSwingScript : MonoBehaviour
     void LateUpdate()
     {
 
-        if (rope != null && !gameOver)
+        if (rope != null)
         {
             lineRenderer.enabled = true;
             lineRenderer.positionCount = 2;
@@ -95,18 +89,7 @@ public class RopeSwingScript : MonoBehaviour
         {
             lineRenderer.enabled = false;
         }
-        if (gameOver)
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                RestartGame();
-            }
-            rigidBodyOfBall.constraints = RigidbodyConstraints.FreezeAll;
-        }
     }
-    /*
-     * It connects first rope before starting
-     */
     private void FirstRope()
     {
         rigidBodyOfBall.useGravity = false;
@@ -126,14 +109,12 @@ public class RopeSwingScript : MonoBehaviour
             firstRopeConnected = true;
         }
     }
-    /*
-     * It swings ball until game starts
-     */
     private void Teeter()
     {
         if (Input.GetMouseButtonDown(0))
         {
             gameStarted = true;
+            UIManager.GetComponent<UIManager>().tapToStartButtonClosed();
         }
         else
         {
@@ -143,9 +124,6 @@ public class RopeSwingScript : MonoBehaviour
         }
 
     }
-    /*
-     * When player touch on screen, this method is called and the rope is slinged to wall
-     */
     private void Sling(RaycastHit aim)
     {
         Vector3 targetPos = new Vector3(aim.transform.position.x,
@@ -154,8 +132,7 @@ public class RopeSwingScript : MonoBehaviour
         Vector3 directionOfRope = targetPos - origin;
         RaycastHit hit;
         Physics.Raycast(origin, directionOfRope, out hit, Mathf.Infinity);
-        print(hit.collider);
-        if (hit.collider != null)
+        if (hit.collider != null && hit.collider.gameObject.CompareTag("obstacle"))
         {
             rigidBodyOfBall.useGravity = false;
             rigidBodyOfBall.mass = 0.1f;
@@ -163,9 +140,6 @@ public class RopeSwingScript : MonoBehaviour
             NewRope(hit);
         }
     }
-    /*
-     * It creates a rope(SpringJoint)
-     */
     private void NewRope(RaycastHit hit)
     {
         SpringJoint newRope = ball.AddComponent<SpringJoint>();
@@ -177,16 +151,8 @@ public class RopeSwingScript : MonoBehaviour
         GameObject.DestroyImmediate(rope);
         rope = newRope;
     }
-    /*
-     * During player touching on screen, this function is called to move player
-     */
     private void BallForce()
     {
         rigidBodyOfBall.AddForce(Vector3.Cross(-transform.right, (origin - rope.connectedAnchor).normalized) * ballSpeed * Time.deltaTime);
-    }
-
-    private void RestartGame()
-    {
-        SceneManager.LoadScene(0);
     }
 }

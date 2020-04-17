@@ -20,14 +20,14 @@ public class BallScript : MonoBehaviour
     //Ball Line
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("bigHex")) {  gameManager.GetComponent<GameManager>().pointSystem(1); }
-        else if (other.gameObject.CompareTag("smallHex")) { gameManager.GetComponent<GameManager>().pointSystem(2); }
-        Destroy(other.gameObject);
-        gameManager.GetComponent<GameManager>().destroyObject++;
+        if (other.gameObject.CompareTag("bigHex")) {  gameManager.GetComponent<GameManager>().pointSystem(1); Destroy(other.transform.parent.gameObject); }
+        else if (other.gameObject.CompareTag("smallHex")) { gameManager.GetComponent<GameManager>().pointSystem(2); Destroy(other.transform.parent.gameObject); }
     }
+        
 
     private void OnCollisionEnter(Collision collision)
     {
+        this.gameObject.SetActive(false);
         if (collision.gameObject.CompareTag("obstacle")) { gameManager.GetComponent<GameManager>().gameOver(); }
     }
 
